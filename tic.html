@@ -1,77 +1,150 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tic Tac Toe</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        table { margin: auto; border-collapse: collapse; }
-        td { width: 80px; height: 80px; text-align: center; font-size: 24px; border: 2px solid black; cursor: pointer; }
-        button { margin-top: 20px; padding: 10px; font-size: 16px; }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+        h1 {
+            color: #333;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
+            margin: 20px 0;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .cell:hover {
+            background-color: #e0e0e0;
+        }
+        #status {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        #reset {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #reset:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
-    <h2>Tic Tac Toe</h2>
-    <table id="ticTacToe"></table>
-    <button onclick="resetGame()">Restart</button>
+    <h1>Tic Tac Toe</h1>
+    <div id="status">Player X's turn</div>
+    <div class="board" id="board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+    </div>
+    <button id="reset">Reset Game</button>
 
     <script>
-        let board = ["", "", "", "", "", "", "", "", ""];
-        let currentPlayer = "X";
-        const winPatterns = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8],
-            [0, 3, 6], [1, 4, 7], [2, 5, 8],
-            [0, 4, 8], [2, 4, 6]
+        const board = document.getElementById('board');
+        const cells = document.querySelectorAll('.cell');
+        const status = document.getElementById('status');
+        const resetButton = document.getElementById('reset');
+        
+        let currentPlayer = 'X';
+        let gameState = ['', '', '', '', '', '', '', '', ''];
+        let gameActive = true;
+        
+        const winningConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+            [0, 4, 8], [2, 4, 6] // diagonals
         ];
-
-        function checkWinner() {
-            for (let pattern of winPatterns) {
-                let [a, b, c] = pattern;
-                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-                    setTimeout(() => alert(`${board[a]} wins!`), 100);
-                    return true;
+        
+        function handleCellClick(e) {
+            const clickedCell = e.target;
+            const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
+            
+            if (gameState[clickedCellIndex] !== '' || !gameActive) {
+                return;
+            }
+            
+            gameState[clickedCellIndex] = currentPlayer;
+            clickedCell.textContent = currentPlayer;
+            
+            checkResult();
+        }
+        
+        function checkResult() {
+            let roundWon = false;
+            
+            for (let i = 0; i < winningConditions.length; i++) {
+                const [a, b, c] = winningConditions[i];
+                
+                if (gameState[a] === '' || gameState[b] === '' || gameState[c] === '') {
+                    continue;
+                }
+                
+                if (gameState[a] === gameState[b] && gameState[b] === gameState[c]) {
+                    roundWon = true;
+                    break;
                 }
             }
-            if (!board.includes("")) {
-                setTimeout(() => alert("It's a draw!"), 100);
-                return true;
+            
+            if (roundWon) {
+                status.textContent = `Player ${currentPlayer} wins!`;
+                gameActive = false;
+                return;
             }
-            return false;
-        }
-
-        function handleClick(index, cell) {
-            if (!board[index]) {
-                board[index] = currentPlayer;
-                cell.textContent = currentPlayer;
-                if (!checkWinner()) {
-                    currentPlayer = currentPlayer === "X" ? "O" : "X";
-                }
+            
+            if (!gameState.includes('')) {
+                status.textContent = "Game ended in a draw!";
+                gameActive = false;
+                return;
             }
+            
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            status.textContent = `Player ${currentPlayer}'s turn`;
         }
-
-        function createBoard() {
-            let table = document.getElementById("ticTacToe");
-            table.innerHTML = "";
-            for (let i = 0; i < 3; i++) {
-                let row = document.createElement("tr");
-                for (let j = 0; j < 3; j++) {
-                    let cell = document.createElement("td");
-                    let index = i * 3 + j;
-                    cell.onclick = () => handleClick(index, cell);
-                    row.appendChild(cell);
-                }
-                table.appendChild(row);
-            }
-        }
-
+        
         function resetGame() {
-            board.fill("");
-            currentPlayer = "X";
-            createBoard();
+            currentPlayer = 'X';
+            gameState = ['', '', '', '', '', '', '', '', ''];
+            gameActive = true;
+            status.textContent = `Player ${currentPlayer}'s turn`;
+            
+            cells.forEach(cell => {
+                cell.textContent = '';
+            });
         }
-
-        createBoard();
+        
+        cells.forEach(cell => {
+            cell.addEventListener('click', handleCellClick);
+        });
+        
+        resetButton.addEventListener('click', resetGame);
     </script>
 </body>
 </html>
